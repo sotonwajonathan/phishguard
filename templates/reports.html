@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishGuard – Admin Reports</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --red:#ff3b2f;--green:#00d084;--amber:#ffb800;
+      --dark:#0d0d0d;--mid:#141414;--card:#1a1a1a;
+      --border:#252525;--muted:#555;--text:#f0ede8;
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text)}
+    .layout{display:flex;min-height:100vh}
+    .sidebar{width:220px;flex-shrink:0;background:var(--mid);border-right:1px solid var(--border);
+      display:flex;flex-direction:column;padding:28px 0;position:sticky;top:0;height:100vh}
+    .logo{font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--red);
+      padding:0 24px 28px;border-bottom:1px solid var(--border);margin-bottom:24px}
+    .logo span{color:var(--text)}
+    .nav a{display:flex;align-items:center;gap:10px;padding:11px 24px;color:var(--muted);
+      text-decoration:none;font-size:.9rem;font-weight:500;transition:all .15s;border-left:2px solid transparent}
+    .nav a:hover,.nav a.active{color:var(--text);border-left-color:var(--red);background:rgba(255,59,47,.05)}
+    .sidebar-footer{margin-top:auto;padding:20px 24px 0;border-top:1px solid var(--border)}
+    .user-pill{font-size:.8rem;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:6px}
+    .logout-link{font-size:.8rem;color:var(--red);text-decoration:none}
+
+    .main{flex:1;padding:40px}
+    .page-header{margin-bottom:32px}
+    .page-header h1{font-family:'Space Mono',monospace;font-size:1.5rem;font-weight:700}
+    .page-header p{color:var(--muted);margin-top:4px;font-size:.9rem}
+
+    /* Stats */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+    .stat-card{background:var(--card);border:1px solid var(--border);padding:20px 22px;position:relative;overflow:hidden}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+    .stat-card.green::before{background:var(--green)}
+    .stat-card.blue::before{background:#4a9eff}
+    .stat-card.amber::before{background:var(--amber)}
+    .stat-label{font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+    .stat-value{font-size:2.4rem;font-weight:600;line-height:1}
+    .stat-card.green .stat-value{color:var(--green)}
+    .stat-card.blue  .stat-value{color:#4a9eff}
+    .stat-card.amber .stat-value{color:var(--amber)}
+
+    /* Tables */
+    .section-card{background:var(--card);border:1px solid var(--border);margin-bottom:24px;overflow:hidden}
+    .section-head{padding:16px 22px;border-bottom:1px solid var(--border);
+      font-family:'Space Mono',monospace;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    table{width:100%;border-collapse:collapse}
+    th{padding:10px 22px;text-align:left;font-family:'Space Mono',monospace;font-size:.65rem;
+      letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+    td{padding:12px 22px;font-size:.88rem;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:rgba(255,255,255,.02)}
+
+    .score-badge{font-family:'Space Mono',monospace;font-size:.75rem;padding:4px 10px;display:inline-block}
+    .score-badge.high{background:rgba(0,208,132,.12);color:var(--green)}
+    .score-badge.mid{background:rgba(255,184,0,.12);color:var(--amber)}
+    .score-badge.low{background:rgba(255,59,47,.12);color:var(--red)}
+    .score-badge.none{background:rgba(255,255,255,.06);color:var(--muted)}
+
+    .badge-diff{font-family:'Space Mono',monospace;font-size:.65rem;padding:3px 8px;text-transform:uppercase}
+    .badge-diff.easy{background:rgba(0,208,132,.12);color:var(--green)}
+    .badge-diff.medium{background:rgba(255,184,0,.12);color:var(--amber)}
+    .badge-diff.hard{background:rgba(255,59,47,.12);color:var(--red)}
+
+    .result-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+    .result-dot.correct{background:var(--green)}
+    .result-dot.incorrect{background:var(--red)}
+
+    /* Mini bar */
+    .mini-bar-wrap{display:inline-block;width:80px;height:3px;background:var(--border);vertical-align:middle;margin-left:8px}
+    .mini-bar{height:3px}
+    .mini-bar.high{background:var(--green)}
+    .mini-bar.mid{background:var(--amber)}
+    .mini-bar.low{background:var(--red)}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="logo">Phish<span>Guard</span></div>
+    <div class="nav">
+      <a href="/dashboard">◉ &nbsp;Dashboard</a>
+      <a href="/admin/reports" class="active">▦ &nbsp;Reports</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-pill">{{ session.user_name }}</div>
+      <a href="/logout" class="logout-link">← Logout</a>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="page-header">
+      <h1>Awareness Reports</h1>
+      <p>Organisation-wide phishing awareness statistics and employee performance.</p>
+    </div>
+
+    <!-- Org stats (computed in Python, not Jinja) -->
+    <div class="stats-row">
+      <div class="stat-card blue">
+        <div class="stat-label">Employees Enrolled</div>
+        <div class="stat-value">{{ employees|length }}</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Completed Training</div>
+        <div class="stat-value">{{ trained_count }}</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">Avg Awareness Score</div>
+        <div class="stat-value">{{ avg_score }}%</div>
+      </div>
+    </div>
+
+    <!-- Employee performance -->
+    <div class="section-card">
+      <div class="section-head">Employee Performance</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th><th>Department</th><th>Attempts</th><th>Correct</th><th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in employees %}
+          <tr>
+            <td>{{ e['name'] }}</td>
+            <td style="color:var(--muted)">{{ e['department'] }}</td>
+            <td>{{ e['total_attempts'] or 0 }}</td>
+            <td>{{ e['total_correct'] or 0 }}</td>
+            <td>
+              {% if e['total_attempts'] and e['total_attempts'] > 0 %}
+                {% set pct = (e['score_pct'] or 0)|int %}
+                {% set cls = 'high' if pct >= 75 else ('mid' if pct >= 50 else 'low') %}
+                <span class="score-badge {{ cls }}">{{ pct }}%</span>
+                <span class="mini-bar-wrap"><span class="mini-bar {{ cls }}" style="width:{{ pct }}%"></span></span>
+              {% else %}
+                <span class="score-badge none">No data</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Scenario success rates -->
+    <div class="section-card">
+      <div class="section-head">Scenario Success Rates (hardest first)</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Scenario</th><th>Difficulty</th><th>Category</th><th>Attempts</th><th>Success Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in scenarios %}
+          <tr>
+            <td>{{ s['title'] }}</td>
+            <td><span class="badge-diff {{ s['difficulty'] }}">{{ s['difficulty'] }}</span></td>
+            <td style="color:var(--muted)">{{ s['category'] }}</td>
+            <td>{{ s['total_attempts'] or 0 }}</td>
+            <td>
+              {% if s['total_attempts'] and s['total_attempts'] > 0 %}
+                {% set pct = (s['success_rate'] or 0)|int %}
+                {% set cls = 'high' if pct >= 75 else ('mid' if pct >= 50 else 'low') %}
+                <span class="score-badge {{ cls }}">{{ pct }}%</span>
+              {% else %}
+                <span class="score-badge none">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Recent activity -->
+    <div class="section-card">
+      <div class="section-head">Recent Activity (last 30)</div>
+      {% if recent %}
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th><th>Scenario</th><th>Difficulty</th><th>Result</th><th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in recent %}
+          <tr>
+            <td>{{ r['emp_name'] }}</td>
+            <td>{{ r['scenario_title'] }}</td>
+            <td><span class="badge-diff {{ r['difficulty'] }}">{{ r['difficulty'] }}</span></td>
+            <td>
+              <span class="result-dot {% if r['is_correct'] %}correct{% else %}incorrect{% endif %}"></span>
+              {% if r['is_correct'] %}Caught it{% else %}Missed{% endif %}
+            </td>
+            <td style="color:var(--muted);font-size:.82rem">{{ r['attempted_at'][:10] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <p style="padding:24px 22px;color:var(--muted);font-size:.9rem">No attempts recorded yet.</p>
+      {% endif %}
+    </div>
+
+  </main>
+</div>
+</body>
+</html>

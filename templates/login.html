@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishGuard – Security Training</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:    #ff3b2f;
+      --dark:   #0d0d0d;
+      --mid:    #1a1a1a;
+      --border: #2a2a2a;
+      --muted:  #666;
+      --text:   #f0ede8;
+      --accent: #ff3b2f;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Scanline texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255,59,47,.015) 2px,
+        rgba(255,59,47,.015) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Animated grid */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,59,47,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,59,47,.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      animation: gridShift 20s linear infinite;
+      z-index: 0;
+    }
+    @keyframes gridShift {
+      from { background-position: 0 0; }
+      to   { background-position: 48px 48px; }
+    }
+
+    .login-wrap {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      padding: 16px;
+    }
+
+    .badge {
+      font-family: 'Space Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--red);
+      border: 1px solid var(--red);
+      display: inline-block;
+      padding: 4px 10px;
+      margin-bottom: 24px;
+      animation: blink 2s step-end infinite;
+    }
+    @keyframes blink {
+      50% { opacity: .4; }
+    }
+
+    h1 {
+      font-family: 'Space Mono', monospace;
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: .9rem;
+      margin-bottom: 36px;
+      font-weight: 300;
+    }
+
+    .card {
+      background: var(--mid);
+      border: 1px solid var(--border);
+      padding: 32px;
+    }
+
+    label {
+      display: block;
+      font-size: .8rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-family: 'Space Mono', monospace;
+    }
+
+    input {
+      width: 100%;
+      background: var(--dark);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: 22px;
+    }
+    input:focus { border-color: var(--red); }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--red);
+      color: #fff;
+      border: none;
+      font-family: 'Space Mono', monospace;
+      font-size: .85rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .85; }
+
+    .error {
+      background: rgba(255,59,47,.12);
+      border: 1px solid rgba(255,59,47,.4);
+      color: #ff8c85;
+      padding: 12px 14px;
+      font-size: .85rem;
+      margin-bottom: 18px;
+    }
+
+    .demo-hints {
+      margin-top: 22px;
+      border-top: 1px solid var(--border);
+      padding-top: 18px;
+    }
+    .demo-hints p {
+      font-family: 'Space Mono', monospace;
+      font-size: .7rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing: .05em;
+    }
+    .demo-hints span { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="login-wrap">
+    <div class="badge">⚠ Security Awareness Training</div>
+    <h1>Phish<br>Guard</h1>
+    <p class="subtitle">Can you spot the threat before it's too late?</p>
+
+    <div class="card">
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/login">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" placeholder="you@company.com" required autocomplete="email">
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="••••••••" required>
+
+        <button type="submit" class="btn">→ Access Training Portal</button>
+      </form>
+
+      <div class="demo-hints">
+        <p>Demo – Admin: <span>admin@company.com</span> / <span>admin123</span></p>
+        <p>Demo – Employee: <span>alice@company.com</span> / <span>password123</span></p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
